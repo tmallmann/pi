@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<script>
+    window.MathJax = { tex: {
+            inlineMath: [['\\(', '\\)']],
+            displayMath: [['\\[', '\\]']]
+        }
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async>
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>π Calculator — Chudnovsky</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0b0d12;
+            color: #f1f3f7;
+            font-family:
+                Inter,
+                ui-sans-serif,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: min(900px, 100%);
+        }
+
+        header {
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            color: #8b93a7;
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            font-size: clamp(32px, 6vw, 56px);
+            margin: 0;
+            letter-spacing: -0.04em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #8f97a8;
+            margin-top: 10px;
+            font-size: 15px;
+        }
+
+        .card {
+            background: #11141b;
+            border: 1px solid #202531;
+            border-radius: 18px;
+            padding: 22px;
+            margin-bottom: 18px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, .18);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #9aa2b3;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid #2a303d;
+            background: #0c0f15;
+            color: #fff;
+            border-radius: 11px;
+            padding: 13px 14px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667085;
+        }
+
+        button {
+            border: 0;
+            border-radius: 11px;
+            padding: 13px 20px;
+            background: #f1f3f7;
+            color: #0b0d12;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: .15s ease;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            background: #fff;
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: wait;
+            transform: none;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stop-button {
+            background: transparent;
+            color: #f1f3f7;
+            border: 1px solid #303643;
+        }
+
+        .stop-button:hover {
+            background: #191d26;
+        }
+
+        .stop-button:disabled {
+            opacity: .35;
+        }
+
+        @media (max-width: 600px) {
+            .buttons {
+                display: grid;
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .status {
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            color: #858da0;
+            font-size: 13px;
+        }
+
+        .progress {
+            margin-top: 12px;
+            height: 5px;
+            border-radius: 99px;
+            background: #202530;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #f1f3f7;
+            transition: width .2s ease;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .result-header span {
+            color: #929aab;
+            font-size: 13px;
+        }
+
+        .copy {
+            background: transparent;
+            color: #b6bdcb;
+            border: 1px solid #2b313e;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .pi-output {
+            background: #0a0c11;
+            border: 1px solid #1c212c;
+            border-radius: 13px;
+            padding: 18px;
+            font-family:
+                "SFMono-Regular",
+                Consolas,
+                "Liberation Mono",
+                monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+            word-break: break-all;
+            color: #dce1e9;
+            max-height: 480px;
+            overflow-y: auto;
+        }
+
+        .pi-symbol {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .stat {
+            background: #0c0f15;
+            border: 1px solid #1c212c;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .stat small {
+            display: block;
+            color: #747d90;
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+
+        .stat strong {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .formula-card {
+            overflow: hidden;
+        }
+
+        .formula {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px 8px;
+        }
+
+        .formula-main {
+            width: 100%;
+            overflow-x: auto;
+            text-align: center;
+            color: #f1f3f7;
+            font-family: "Times New Roman", Georgia, serif;
+            font-size: clamp(18px, 3vw, 27px);
+            line-height: 1.8;
+        }
+
+        .formula-note {
+            margin-top: 14px;
+            color: #737c8f;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .meta {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <header>
+            <div class="eyebrow">Matemática • BigInt</div>
+            <h1>π Calculator</h1>
+            <div class="subtitle">
+                Cálculo de π usando a fórmula de Chudnovsky.
+            </div>
+        </header>
+
+        <section class="card">
+
+            <div class="controls">
+                <div>
+                    <label for="digits">Quantidade de dígitos (max. 1M)</label>
+                    <input id="digits" type="number" min="1" max="5000" value="100">
+                </div>
+
+                <div class="buttons">
+                    <button id="calculate">
+                        Calcular π
+                    </button>
+
+                    <button id="stop" class="stop-button" disabled>
+                        Parar
+                    </button>
+                </div>
+            </div>
+
+            <div class="status">
+                <span id="status">Pronto para calcular.</span>
+                <span id="iterations">0 termos</span>
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar" id="progress"></div>
+            </div>
+
+        </section>
+
+        <section class="card">
+
+            <div class="result-header">
+                <span>Resultado</span>
+                <button class="copy" id="copy">Copiar</button>
+            </div>
+
+            <div class="pi-output" id="output">
+                <span class="pi-symbol">π</span> = —
+            </div>
+
+            <div class="meta">
+                <div class="stat">
+                    <small>Dígitos</small>
+                    <strong id="statDigits">—</strong>
+                </div>
+
+                <div class="stat">
+                    <small>Termos utilizados</small>
+                    <strong id="statTerms">—</strong>
+                </div>
+
+                <div class="stat">
+                    <small>Tempo</small>
+                    <strong id="statTime">—</strong>
+                </div>
+            </div>
+
+        </section>
+
+        <section class="card formula-card">
+
+            <div class="eyebrow">Fórmula de Chudnovsky</div>
+
+            <div class="formula">
+
+                <div class="formula-main">
+                    \[
+                    \frac{1}{\pi}
+                    =
+                    12
+                    \sum_{k=0}^{\infty}
+                    \frac{
+                    (-1)^k(6k)!
+                    \left(13591409 + 545140134k\right)
+                    }{
+                    (3k)!(k!)^3
+                    640320^{\,3k+\frac{3}{2}}
+                    }
+                    \]
+                </div>
+
+                <div class="formula-note">
+                    Cada termo acrescenta aproximadamente 14 dígitos corretos de π.
+                </div>
+
+            </div>
+
+        </section>
+
+
+    </div>
+
+    <script>
+        "use strict";
+
+        const digitsInput = document.getElementById("digits");
+        
+        const calculateButton = document.getElementById("calculate");
+        const stopButton = document.getElementById("stop");
+        const copyButton = document.getElementById("copy");
+
+        const output = document.getElementById("output");
+        const statusText = document.getElementById("status");
+        const iterationsText = document.getElementById("iterations");
+        const progressBar = document.getElementById("progress");
+
+        const statDigits = document.getElementById("statDigits");
+        const statTerms = document.getElementById("statTerms");
+        const statTime = document.getElementById("statTime");
+
+        let currentPi = "";
+        let calculationController = null;
+
+        /* Potência inteira */
+        function powBigInt(base, exponent) {
+            let result = 1n;
+
+            while (exponent > 0) {
+                if (exponent & 1)
+                    result *= base;
+
+                base *= base;
+                exponent >>= 1;
+            }
+
+            return result;
+        }
+
+
+        /* Fatorial */
+        function factorial(n) {
+            let result = 1n;
+
+            for (let i = 2; i <= n; i++) {
+                result *= BigInt(i);
+            }
+            return result;
+        }
+
+
+        /* Raiz quadrada inteira usando Newton-Raphson; Retorna floor(sqrt(n)) */
+        function integerSqrt(n) {
+
+            if (n < 0n)
+                throw new Error("Não existe raiz real de número negativo.");
+
+            if (n < 2n)
+                return n;
+
+            let x = 1n << BigInt((n.toString(2).length + 1) >> 1);
+
+            while (true) {
+                const y = (x + n / x) >> 1n;
+
+                if (y >= x)
+                    return x;
+
+                x = y;
+            }
+        }
+
+
+        /* Calcula pi com "digits" casas decimais */
+        async function calculatePi(digits, signal) {
+
+            const guardDigits = 20;
+            const precision = digits + guardDigits;
+            const SCALE = 10n ** BigInt(precision);
+            const terms = Math.ceil(precision / 14) + 1;
+            let sum = 0n;
+
+            for (let k = 0; k < terms; k++) {
+
+                if (signal.aborted) {
+                    throw new DOMException("Cálculo interrompido.", "AbortError");
+                }
+
+                const kBig = BigInt(k);
+                const fact6k = factorial(6 * k);
+                const fact3k = factorial(3 * k);
+                const factK = factorial(k);
+                const numerator = fact6k * (13591409n + 545140134n * kBig);
+                const denominator = fact3k * factK * factK * factK * powBigInt(640320n, 3 * k);
+
+                let term = (numerator * SCALE) / denominator;
+
+                if (k % 2 === 1) {
+                    term = -term;
+                }
+
+                sum += term;
+
+                const percent = ((k + 1) / terms) * 100;
+
+                progressBar.style.width = percent.toFixed(1) + "%";
+                iterationsText.textContent = `${k + 1} / ${terms} termos`;
+                statusText.textContent = `Calculando termo ${k + 1}...`;
+
+                /* Devolve o controle ao navegador para que o botão "Parar" possa ser pressionado */
+                await new Promise(resolve =>
+                    setTimeout(resolve, 0)
+                );
+            }
+
+            if (signal.aborted) {
+                throw new DOMException("Cálculo interrompido.", "AbortError");
+            }
+
+            const sqrt10005Scaled = integerSqrt(10005n * SCALE * SCALE);
+            const piScaled = (426880n * sqrt10005Scaled * SCALE) / sum;
+            let raw = piScaled.toString();
+
+            while (raw.length <= precision) {
+                raw = "0" + raw;
+            }
+
+            const decimalPosition = raw.length - precision;
+            const integerPart = raw.slice(0, decimalPosition);
+            const decimalPart = raw.slice(decimalPosition);
+            const finalDecimal = decimalPart.slice(0, digits);
+
+            return {
+                value: integerPart + "." + finalDecimal, terms, precision
+            };
+        }
+
+
+        /* Botão principal */
+        calculateButton.addEventListener("click", async () => {
+
+            let digits = parseInt(digitsInput.value, 10);
+
+            if (!Number.isFinite(digits))
+                digits = 100;
+
+            digits = Math.max(1, Math.min(1000000, digits));
+            digitsInput.value = digits;
+
+            /* Cria um novo controlador para esta execução */
+            calculationController = new AbortController();
+
+            calculateButton.disabled = true;
+            stopButton.disabled = false;
+            statusText.textContent = "Iniciando cálculo...";
+            progressBar.style.width = "0%";
+            output.innerHTML = '<span class="pi-symbol">π</span> = calculando…';
+
+            statDigits.textContent = "—";
+            statTerms.textContent = "—";
+            statTime.textContent = "—";
+
+            const start = performance.now();
+
+            try {
+                const result = await calculatePi(digits, calculationController.signal);
+                const elapsed = performance.now() - start;
+
+                currentPi = result.value;
+
+                output.innerHTML = `<span class="pi-symbol">π</span> = ${currentPi}`;
+                statDigits.textContent = digits.toLocaleString("pt-BR");
+                statTerms.textContent = result.terms.toLocaleString("pt-BR");
+                statTime.textContent = `${(elapsed / 1000).toFixed(9)} s`;
+                statusText.textContent = "Cálculo concluído.";
+                progressBar.style.width = "100%";
+
+            } catch (error) {
+
+                if (error.name === "AbortError") {
+                    const elapsed = performance.now() - start;
+                    statusText.textContent = "Cálculo interrompido.";
+                    statTime.textContent = `${(elapsed / 1000).toFixed(9)} s`;
+                } else {
+                    console.error(error);
+                    statusText.textContent = "Erro durante o cálculo.";
+                    output.innerHTML = '<span class="pi-symbol">π</span> = erro';
+                }
+
+            } finally {
+                calculateButton.disabled = false;
+                stopButton.disabled = true;
+                calculationController = null;
+            }
+        });
+
+        stopButton.addEventListener("click", () => {
+
+            if (calculationController) {
+                calculationController.abort();
+                stopButton.disabled = true;
+                statusText.textContent = "Parando cálculo...";
+            }
+        });
+
+        /* Copiar resultado */
+        copyButton.addEventListener("click", async () => {
+
+            if (!currentPi)
+                return;
+            try {
+                await navigator.clipboard.writeText(currentPi);
+                const oldText = copyButton.textContent;
+                copyButton.textContent = "Copiado!";
+
+                setTimeout(() => {
+                    copyButton.textContent = oldText;
+                }, 1200);
+
+            } catch {
+                alert("Não foi possível copiar.");
+            }
+        });
+
+        /* Pressionar Enter no campo */
+        digitsInput.addEventListener("keydown", event => {
+            if (event.key === "Enter" && !calculateButton.disabled) {
+                calculateButton.click();
+            }
+        });
+
+    </script>
+</body>
+</html>
